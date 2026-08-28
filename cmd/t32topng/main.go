@@ -3,14 +3,13 @@ package main
 import (
 	"encoding/json"
 	"fmt"
-	"image"
-	"image/png"
 	"log"
 	"os"
 	"path/filepath"
 
 	"github.com/anasrar/odore/pkg/metadata"
 	"github.com/anasrar/odore/pkg/t32"
+	"github.com/anasrar/odore/pkg/utils"
 	"github.com/spf13/cobra"
 )
 
@@ -20,7 +19,7 @@ var cmd = &cobra.Command{
 	Use:   "t32topng",
 	Short: "Convert T32 to PNG",
 	Run: func(cmd *cobra.Command, args []string) {
-		pathDirectoryFiles, pathManifest, err := unpackPath(input)
+		pathDirectoryFiles, pathManifest, err := utils.UnpackPath(input)
 		if err != nil {
 			log.Fatal(err)
 		}
@@ -65,7 +64,7 @@ var cmd = &cobra.Command{
 
 				filename := fmt.Sprintf("texture_%03d_palette_%03d.png", textureIndex, paletteIndex)
 				outputPath := filepath.Join(pathDirectoryFiles, filename)
-				if err := writePNG(outputPath, decoded.Image()); err != nil {
+				if err := utils.WritePNG(outputPath, decoded.Image()); err != nil {
 					log.Fatal(err)
 				}
 
@@ -104,38 +103,4 @@ func init() {
 
 func main() {
 	cmd.Execute()
-}
-
-func writePNG(outputPath string, imageData image.Image) error {
-	file, err := os.Create(outputPath)
-	if err != nil {
-		return err
-	}
-	defer file.Close()
-
-	if err := png.Encode(file, imageData); err != nil {
-		return err
-	}
-	return nil
-}
-
-func unpackPath(path string) (string, string, error) {
-	filename := fmt.Sprintf("UNPACK_%s", filepath.Base(path))
-	directory := ""
-
-	if filepath.IsAbs(path) {
-		directory = filepath.Dir(filepath.Clean(path))
-	} else {
-		cwd, err := os.Getwd()
-		if err != nil {
-			return "", "", err
-		}
-
-		directory = filepath.Dir(filepath.Clean(filepath.Join(cwd, path)))
-	}
-
-	pathDirectoryFiles := filepath.Join(directory, filename, "FILES")
-	pathMetadata := filepath.Join(directory, filename, "METADATA.json")
-
-	return pathDirectoryFiles, pathMetadata, nil
 }

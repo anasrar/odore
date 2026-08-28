@@ -9,7 +9,7 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/anasrar/odore/pkg/manifest"
+	"github.com/anasrar/odore/pkg/metadata"
 	"github.com/anasrar/odore/pkg/t32"
 	"github.com/spf13/cobra"
 )
@@ -42,7 +42,7 @@ func main() {
 				log.Fatal(err)
 			}
 
-			metadata := manifest.Metadata{Textures: make([]manifest.Texture, 0)}
+			m := metadata.MetadataT32{Textures: make([]metadata.TextureT32, 0)}
 
 			for textureIndex, texture := range container.Textures {
 				if !texture.IsIndexed() {
@@ -54,9 +54,9 @@ func main() {
 					continue
 				}
 
-				tx := manifest.Texture{
+				tx := metadata.TextureT32{
 					Index:    uint64(texture.Index),
-					Palettes: make([]manifest.Palette, 0),
+					Palettes: make([]metadata.PaletteT32, 0),
 				}
 
 				for paletteIndex := 0; paletteIndex < int(texture.PaletteTotal); paletteIndex++ {
@@ -73,13 +73,13 @@ func main() {
 
 					log.Printf("create: %s", filename)
 
-					tx.Palettes = append(tx.Palettes, manifest.Palette{
+					tx.Palettes = append(tx.Palettes, metadata.PaletteT32{
 						Index: uint64(paletteIndex),
 						Path:  outputPath,
 					})
 				}
 
-				metadata.Textures = append(metadata.Textures, tx)
+				m.Textures = append(m.Textures, tx)
 			}
 
 			fileManifest, err := os.Create(pathManifest)
@@ -88,7 +88,7 @@ func main() {
 			}
 			defer file.Close()
 
-			j, err := json.MarshalIndent(metadata, "", "  ")
+			j, err := json.MarshalIndent(m, "", "  ")
 			if err != nil {
 				log.Fatal(err)
 			}
@@ -131,7 +131,7 @@ func unpackPath(path string) (string, string, error) {
 	}
 
 	pathDirectoryFiles := filepath.Join(directory, filename, "FILES")
-	pathManifest := filepath.Join(directory, filename, "MANIFEST.json")
+	pathMetadata := filepath.Join(directory, filename, "METADATA.json")
 
-	return pathDirectoryFiles, pathManifest, nil
+	return pathDirectoryFiles, pathMetadata, nil
 }

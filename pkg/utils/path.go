@@ -26,3 +26,8 @@ func UnpackPath(path string) (string, string, error) {
 
 	return pathDirectoryFiles, pathMetadata, nil
 }
+
+func PackPath(path string) string {
+	directory := filepath.Dir(filepath.Clean(path))
+	return directory
+}

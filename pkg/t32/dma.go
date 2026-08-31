@@ -6,6 +6,7 @@ import (
 	"io"
 
 	"github.com/anasrar/binarium"
+	"github.com/anasrar/odore/pkg/utils"
 )
 
 type DMAID uint8
@@ -100,7 +101,7 @@ func ReadDMATransfer(
 
 	transfer.Upload = DecodeGSUpload(transfer.Packet, payloadOffset, payloadSize)
 	transfer.Data = make([]byte, payloadSize)
-	if err := SeekAbsolute(stream, absolutePayloadOffset); err != nil {
+	if err := utils.SeekAbsolute(stream, absolutePayloadOffset); err != nil {
 		return transfer, err
 	}
 	if _, err := io.ReadFull(stream, transfer.Data); err != nil {
@@ -190,7 +191,7 @@ func ValidateRegion(fileSize uint64, offset uint64, size uint64, name string) er
 }
 
 func unmarshalAt(stream io.ReadSeeker, offset uint64, target any) error {
-	if err := SeekAbsolute(stream, offset); err != nil {
+	if err := utils.SeekAbsolute(stream, offset); err != nil {
 		return err
 	}
 	return binarium.UnmarshalWithReader(stream, binary.LittleEndian, target)

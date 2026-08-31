@@ -1,4 +1,4 @@
-package t32
+package utils
 
 import (
 	"fmt"

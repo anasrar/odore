@@ -10,6 +10,7 @@ import (
 
 	"github.com/anasrar/binarium"
 	"github.com/anasrar/graphicsynthesizer"
+	"github.com/anasrar/odore/pkg/utils"
 )
 
 type Header struct {
@@ -116,7 +117,7 @@ func (c *Container) unmarshal(stream io.ReadSeeker) error {
 		return errors.New("stream is nil")
 	}
 
-	fileSize, err := SeekerSize(stream)
+	fileSize, err := utils.SeekerSize(stream)
 	if err != nil {
 		return err
 	}
@@ -126,7 +127,7 @@ func (c *Container) unmarshal(stream io.ReadSeeker) error {
 			baseOffset, fileSize)
 	}
 
-	if err := SeekAbsolute(stream, baseOffset); err != nil {
+	if err := utils.SeekAbsolute(stream, baseOffset); err != nil {
 		return err
 	}
 	var header Header
@@ -139,7 +140,7 @@ func (c *Container) unmarshal(stream io.ReadSeeker) error {
 
 	parsed := New()
 	parsed.Offset = c.Offset
-	if err := SeekAbsolute(stream, baseOffset); err != nil {
+	if err := utils.SeekAbsolute(stream, baseOffset); err != nil {
 		return err
 	}
 

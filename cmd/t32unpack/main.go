@@ -56,7 +56,7 @@ var cmd = &cobra.Command{
 				Palettes: make([]metadata.PaletteT32, 0),
 			}
 
-			for paletteIndex := 0; paletteIndex < int(texture.PaletteTotal); paletteIndex++ {
+			for paletteIndex := range texture.Palettes {
 				decoded, err := container.DecodeTexture(textureIndex, paletteIndex)
 				if err != nil {
 					log.Fatal(err)
@@ -64,7 +64,7 @@ var cmd = &cobra.Command{
 
 				filename := fmt.Sprintf("texture_%03d_palette_%03d.png", textureIndex, paletteIndex)
 				outputPath := filepath.Join(pathDirectoryFiles, filename)
-				if err := utils.WritePNG(outputPath, decoded.Image()); err != nil {
+				if err := utils.WritePNG(outputPath, decoded.PalettedImage()); err != nil {
 					log.Fatal(err)
 				}
 

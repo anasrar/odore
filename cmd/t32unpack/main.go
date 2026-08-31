@@ -17,7 +17,7 @@ var input string
 
 var cmd = &cobra.Command{
 	Use:   "t32unpack",
-	Short: "Convert T32 to PNG",
+	Short: "Unpack T32 to PNG",
 	Run: func(cmd *cobra.Command, args []string) {
 		pathDirectoryFiles, pathManifest, err := utils.UnpackPath(input)
 		if err != nil {

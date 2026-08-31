@@ -35,10 +35,11 @@ type Texture struct {
 	NextTextureIndex uint32 `json:"next_texture_index"`
 	NextTextureSize  uint32 `json:"next_texture_size"`
 
-	Index    uint32 `json:"index" skip:""`
-	DataSize uint32 `json:"data_size" skip:""`
-	GsTex0   GSTex0 `json:"gs_tex_0" skip:""`
-	GsTex1   GSTex1 `json:"gs_tex_1" skip:""`
+	Index    uint32           `json:"index" skip:""`
+	DataSize uint32           `json:"data_size" skip:""`
+	GsTex0   GSTex0           `json:"gs_tex_0" skip:""`
+	GsTex1   GSTex1           `json:"gs_tex_1" skip:""`
+	Palettes []DecodedTexture `json:"palettes" skip:""`
 }
 
 func (t *Texture) IsIndexed() bool {
@@ -68,6 +69,8 @@ type DecodedTexture struct {
 	Indices      []byte           `json:"indices"`
 	Palette      []RGBA           `json:"palette"`
 	Pixels       []RGBA           `json:"pixels"`
+
+	provenance *decodedProvenance
 }
 
 func (d *DecodedTexture) RGBABytes() []byte {
@@ -99,6 +102,9 @@ type Container struct {
 	Textures   []Texture `json:"textures" length:"TextureTotal"`
 	ImageDMA   DMAChain  `json:"image_dma" skip:""`
 	PaletteDMA DMAChain  `json:"palette_dma" skip:""`
+
+	source      *sourceIdentity `json:"-" skip:""`
+	sourceExact bool            `json:"-" skip:""`
 }
 
 func New() *Container {
@@ -173,6 +179,12 @@ func (c *Container) unmarshal(stream io.ReadSeeker) error {
 	if err != nil {
 		return err
 	}
+	if err := parsed.hydrateDecodedTextures(); err != nil {
+		return err
+	}
+	if err := parsed.captureSource(stream, fileSize, baseOffset); err != nil {
+		return err
+	}
 
 	*c = *parsed
 	return nil
@@ -186,12 +198,31 @@ func (c *Container) DecodeTexture(textureIndex, paletteIndex int) (*DecodedTextu
 	if !texture.IsIndexed() {
 		return nil, ErrNotIndexed
 	}
+	if paletteIndex < 0 || paletteIndex >= len(texture.Palettes) {
+		return nil, fmt.Errorf(
+			"texture %d palette %d outside [0,%d)",
+			textureIndex,
+			paletteIndex,
+			len(texture.Palettes),
+		)
+	}
+	return &texture.Palettes[paletteIndex], nil
+}
 
-	indices, err := c.PixelIndices(textureIndex)
+func (c *Container) decodeTextureFromDMA(textureIndex, paletteIndex int) (*DecodedTexture, error) {
+	texture, err := c.textureAt(textureIndex)
 	if err != nil {
 		return nil, err
 	}
-	palette, err := c.ColorPalette(textureIndex, paletteIndex)
+	if !texture.IsIndexed() {
+		return nil, ErrNotIndexed
+	}
+
+	indices, err := c.pixelIndicesFromDMA(textureIndex)
+	if err != nil {
+		return nil, err
+	}
+	palette, err := c.colorPaletteFromDMA(textureIndex, paletteIndex)
 	if err != nil {
 		return nil, err
 	}
@@ -223,6 +254,20 @@ func (c *Container) DecodeTexture(textureIndex, paletteIndex int) (*DecodedTextu
 }
 
 func (c *Container) PixelIndices(textureIndex int) ([]byte, error) {
+	texture, err := c.textureAt(textureIndex)
+	if err != nil {
+		return nil, err
+	}
+	if !texture.IsIndexed() {
+		return nil, ErrNotIndexed
+	}
+	if len(texture.Palettes) != 0 {
+		return append([]byte(nil), texture.Palettes[0].Indices...), nil
+	}
+	return c.pixelIndicesFromDMA(textureIndex)
+}
+
+func (c *Container) pixelIndicesFromDMA(textureIndex int) ([]byte, error) {
 	texture, err := c.textureAt(textureIndex)
 	if err != nil {
 		return nil, err
@@ -324,6 +369,28 @@ func (c *Container) PixelIndices(textureIndex int) ([]byte, error) {
 }
 
 func (c *Container) ColorPalette(textureIndex, paletteIndex int) ([]RGBA, error) {
+	texture, err := c.textureAt(textureIndex)
+	if err != nil {
+		return nil, err
+	}
+	if !texture.IsIndexed() {
+		return nil, ErrNotIndexed
+	}
+	if len(texture.Palettes) != 0 {
+		if paletteIndex < 0 || paletteIndex >= len(texture.Palettes) {
+			return nil, fmt.Errorf(
+				"texture %d palette %d outside [0,%d)",
+				textureIndex,
+				paletteIndex,
+				len(texture.Palettes),
+			)
+		}
+		return append([]RGBA(nil), texture.Palettes[paletteIndex].Palette...), nil
+	}
+	return c.colorPaletteFromDMA(textureIndex, paletteIndex)
+}
+
+func (c *Container) colorPaletteFromDMA(textureIndex, paletteIndex int) ([]RGBA, error) {
 	texture, err := c.textureAt(textureIndex)
 	if err != nil {
 		return nil, err

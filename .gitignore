@@ -1,3 +1,3 @@
-cmd/t32topng/*t32
-cmd/t32topng/UNPACK_zensh_31
-cmd/t32topng/zensh_31
+cmd/t32unpack/*t32
+cmd/t32unpack/UNPACK_*
+cmd/t32unpack/zensh_*

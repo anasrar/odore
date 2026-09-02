@@ -13,7 +13,10 @@ import (
 	"github.com/spf13/cobra"
 )
 
-var input string
+var (
+	input  string
+	offset uint32
+)
 
 var cmd = &cobra.Command{
 	Use:   "t32unpack",
@@ -28,14 +31,8 @@ var cmd = &cobra.Command{
 			log.Fatal(err)
 		}
 
-		file, err := os.Open(input)
-		if err != nil {
-			log.Fatal(err)
-		}
-		defer file.Close()
-
 		container := t32.New()
-		if err := t32.FromStream(container, file); err != nil {
+		if err := t32.FromPathWithOffset(container, input, offset); err != nil {
 			log.Fatal(err)
 		}
 
@@ -83,7 +80,7 @@ var cmd = &cobra.Command{
 		if err != nil {
 			log.Fatal(err)
 		}
-		defer file.Close()
+		defer fileManifest.Close()
 
 		j, err := json.MarshalIndent(m, "", "  ")
 		if err != nil {
@@ -99,6 +96,7 @@ var cmd = &cobra.Command{
 func init() {
 	cmd.Flags().StringVarP(&input, "input", "i", "", "Input file")
 	cmd.MarkFlagRequired("input")
+	cmd.Flags().Uint32VarP(&offset, "offset", "o", 0x0, "Input file")
 }
 
 func main() {

@@ -43,6 +43,8 @@ Base on `zensh_`.
 
 ## File Name Pattern
 
+### linkData.afs
+
 ```
 armyNN.epk: compressed MDB 3D model with YZ2, untested
 busho_NN_(N): T32 UI text, untested

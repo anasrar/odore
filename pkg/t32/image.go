@@ -48,10 +48,7 @@ func (d *DecodedTexture) PalettedImage() *image.Paletted {
 	return result
 }
 
-func (c *Container) AddTexture(img *image.Paletted) int {
-	if c == nil {
-		panic(ErrContainerIsNil)
-	}
+func (c *Container) AddTexture(img *image.Paletted) (int, error) {
 	provenance := provenanceFromPaletted(img)
 	format := inferPixelStorageMode(img)
 	if provenance != nil {
@@ -59,7 +56,7 @@ func (c *Container) AddTexture(img *image.Paletted) int {
 	}
 	decoded, err := decodedFromPaletted(img, format)
 	if err != nil {
-		panic(err)
+		return 0, err
 	}
 
 	index := len(c.Textures)
@@ -92,28 +89,25 @@ func (c *Container) AddTexture(img *image.Paletted) int {
 	texture.Index = uint32(index)
 	c.Textures = append(c.Textures, texture)
 	c.normalizeHierarchy()
-	return index
+	return index, nil
 }
 
-func (c *Container) AddPaletteAtTexture(index int, img *image.Paletted) {
-	if c == nil {
-		panic(ErrContainerIsNil)
-	}
+func (c *Container) AddPaletteAtTexture(index int, img *image.Paletted) error {
 	texture, err := c.textureAt(index)
 	if err != nil {
-		panic(err)
+		return err
 	}
 	if len(texture.Palettes) == 0 {
-		panic(fmt.Errorf("texture %d has no base palette", index))
+		return fmt.Errorf("texture %d has no base palette", index)
 	}
 	base := &texture.Palettes[0]
 	if img == nil || img.Bounds().Dx() != base.Width || img.Bounds().Dy() != base.Height {
-		panic(fmt.Errorf(
+		return fmt.Errorf(
 			"texture %d palette dimensions must be %dx%d",
 			index,
 			base.Width,
 			base.Height,
-		))
+		)
 	}
 
 	provenance := provenanceFromPaletted(img)
@@ -125,7 +119,7 @@ func (c *Container) AddPaletteAtTexture(index int, img *image.Paletted) {
 	}
 	decoded, err := decodedFromPaletted(img, base.Format)
 	if err != nil {
-		panic(err)
+		return err
 	}
 	decoded.TextureIndex = index
 	decoded.PaletteIndex = paletteIndex
@@ -134,43 +128,43 @@ func (c *Container) AddPaletteAtTexture(index int, img *image.Paletted) {
 	decoded.provenance = provenance
 	texture.Palettes = append(texture.Palettes, *decoded)
 	c.normalizeHierarchy()
+
+	return nil
 }
 
-func (c *Container) RemoveTexture(index int) {
-	if c == nil {
-		panic(ErrContainerIsNil)
-	}
+func (c *Container) RemoveTexture(index int) error {
 	if _, err := c.textureAt(index); err != nil {
-		panic(err)
+		return err
 	}
 	copy(c.Textures[index:], c.Textures[index+1:])
 	c.Textures[len(c.Textures)-1] = Texture{}
 	c.Textures = c.Textures[:len(c.Textures)-1]
 	c.sourceExact = false
 	c.normalizeHierarchy()
+
+	return nil
 }
 
-func (c *Container) RemovePaletteAtTexture(indexTexture, indexPalette int) {
-	if c == nil {
-		panic(ErrContainerIsNil)
-	}
+func (c *Container) RemovePaletteAtTexture(indexTexture, indexPalette int) error {
 	texture, err := c.textureAt(indexTexture)
 	if err != nil {
-		panic(err)
+		return err
 	}
 	if indexPalette < 0 || indexPalette >= len(texture.Palettes) {
-		panic(fmt.Errorf(
+		return fmt.Errorf(
 			"texture %d palette %d outside [0,%d)",
 			indexTexture,
 			indexPalette,
 			len(texture.Palettes),
-		))
+		)
 	}
 	copy(texture.Palettes[indexPalette:], texture.Palettes[indexPalette+1:])
 	texture.Palettes[len(texture.Palettes)-1] = DecodedTexture{}
 	texture.Palettes = texture.Palettes[:len(texture.Palettes)-1]
 	c.sourceExact = false
 	c.normalizeHierarchy()
+
+	return nil
 }
 
 func (c *Container) normalizeHierarchy() {

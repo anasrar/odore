@@ -1,7 +1,6 @@
 package t32
 
 import (
-	"errors"
 	"sync"
 )
 
@@ -18,7 +17,5 @@ const (
 )
 
 var (
-	ErrNotIndexed   = errors.New("texture is not PSMT8 or PSMT4 indexed data")
-	ErrContainerIsNil = errors.New("Container is nil")
-	gsMutex         sync.Mutex
+	gsMutex sync.Mutex
 )

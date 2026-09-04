@@ -47,7 +47,10 @@ func pack(input string) error {
 			}
 
 			if paletteIndex == 0 {
-				ti = container.AddTexture(imgPaletted)
+				ti, err = container.AddTexture(imgPaletted)
+				if err != nil {
+					return err
+				}
 			} else {
 				container.AddPaletteAtTexture(ti, imgPaletted)
 			}

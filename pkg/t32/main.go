@@ -116,9 +116,6 @@ func New() *Container {
 }
 
 func (c *Container) unmarshal(stream io.ReadSeeker) error {
-	if c == nil {
-		return ErrContainerIsNil
-	}
 	if stream == nil {
 		return errors.New("stream is nil")
 	}
@@ -196,7 +193,7 @@ func (c *Container) DecodeTexture(textureIndex, paletteIndex int) (*DecodedTextu
 		return nil, err
 	}
 	if !texture.IsIndexed() {
-		return nil, ErrNotIndexed
+		return nil, utils.ErrNotIndexed
 	}
 	if paletteIndex < 0 || paletteIndex >= len(texture.Palettes) {
 		return nil, fmt.Errorf(
@@ -215,7 +212,7 @@ func (c *Container) decodeTextureFromDMA(textureIndex, paletteIndex int) (*Decod
 		return nil, err
 	}
 	if !texture.IsIndexed() {
-		return nil, ErrNotIndexed
+		return nil, utils.ErrNotIndexed
 	}
 
 	indices, err := c.pixelIndicesFromDMA(textureIndex)
@@ -259,7 +256,7 @@ func (c *Container) PixelIndices(textureIndex int) ([]byte, error) {
 		return nil, err
 	}
 	if !texture.IsIndexed() {
-		return nil, ErrNotIndexed
+		return nil, utils.ErrNotIndexed
 	}
 	if len(texture.Palettes) != 0 {
 		return append([]byte(nil), texture.Palettes[0].Indices...), nil
@@ -273,7 +270,7 @@ func (c *Container) pixelIndicesFromDMA(textureIndex int) ([]byte, error) {
 		return nil, err
 	}
 	if !texture.IsIndexed() {
-		return nil, ErrNotIndexed
+		return nil, utils.ErrNotIndexed
 	}
 
 	gsMutex.Lock()
@@ -364,7 +361,7 @@ func (c *Container) pixelIndicesFromDMA(textureIndex int) ([]byte, error) {
 		return indices, nil
 
 	default:
-		return nil, ErrNotIndexed
+		return nil, utils.ErrNotIndexed
 	}
 }
 
@@ -374,7 +371,7 @@ func (c *Container) ColorPalette(textureIndex, paletteIndex int) ([]RGBA, error)
 		return nil, err
 	}
 	if !texture.IsIndexed() {
-		return nil, ErrNotIndexed
+		return nil, utils.ErrNotIndexed
 	}
 	if len(texture.Palettes) != 0 {
 		if paletteIndex < 0 || paletteIndex >= len(texture.Palettes) {
@@ -396,7 +393,7 @@ func (c *Container) colorPaletteFromDMA(textureIndex, paletteIndex int) ([]RGBA,
 		return nil, err
 	}
 	if !texture.IsIndexed() {
-		return nil, ErrNotIndexed
+		return nil, utils.ErrNotIndexed
 	}
 	if texture.GsTex0.CSM != 0 {
 		return nil, fmt.Errorf("texture %d uses unsupported CSM2 palette storage", textureIndex)
@@ -497,7 +494,7 @@ func (c *Container) resolveTextures() error {
 
 func FromStreamWithOffset(c *Container, stream io.ReadSeeker, offset uint32) error {
 	if c == nil {
-		return ErrContainerIsNil
+		return utils.ErrContainerIsNil
 	}
 	c.Offset = offset
 	return c.unmarshal(stream)

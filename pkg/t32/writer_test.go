@@ -16,11 +16,11 @@ func TestWriteAndDecodeCanonicalContainer(t *testing.T) {
 	second := testPaletted(256, 128, 256, 3)
 
 	container := t32.New()
-	if index := container.AddTexture(first); index != 0 {
+	if index, _ := container.AddTexture(first); index != 0 {
 		t.Fatalf("first texture index = %d, want 0", index)
 	}
 	container.AddPaletteAtTexture(0, secondPalette)
-	if index := container.AddTexture(second); index != 1 {
+	if index, _ := container.AddTexture(second); index != 1 {
 		t.Fatalf("second texture index = %d, want 1", index)
 	}
 

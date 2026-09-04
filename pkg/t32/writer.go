@@ -51,9 +51,6 @@ type uploadWritePlan struct {
 }
 
 func (c *Container) Write(writer io.Writer) error {
-	if c == nil {
-		return ErrContainerIsNil
-	}
 	if writer == nil {
 		return errors.New("writer is nil")
 	}

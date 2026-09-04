@@ -117,7 +117,7 @@ func New() *Container {
 
 func (c *Container) unmarshal(stream io.ReadSeeker) error {
 	if stream == nil {
-		return errors.New("stream is nil")
+		return utils.ErrStreamIsNil
 	}
 
 	fileSize, err := utils.SeekerSize(stream)

@@ -33,7 +33,7 @@ func drop(input string, offset uint32) error {
 			continue
 		}
 
-		for paletteIndex, _ := range texture.Palettes {
+		for paletteIndex := range texture.Palettes {
 			filename := fmt.Sprintf("texture_%03d_palette_%03d.png", textureIndex, paletteIndex)
 
 			decoded, err := container.DecodeTexture(textureIndex, paletteIndex)

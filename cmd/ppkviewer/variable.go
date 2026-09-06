@@ -1,6 +1,9 @@
 package main
 
-import rl "github.com/gen2brain/raylib-go/raylib"
+import (
+	"github.com/anasrar/odore/pkg/mdb"
+	rl "github.com/gen2brain/raylib-go/raylib"
+)
 
 var Version = "dev"
 
@@ -15,13 +18,15 @@ var (
 )
 
 var camera = rl.NewCamera3D(
-	rl.NewVector3(0, 2.8, 2.8),
-	rl.NewVector3(0, 1.2, 0),
+	rl.NewVector3(0, 4.8, 3.8),
+	rl.NewVector3(0, 2.2, 0),
 	rl.NewVector3(0, 1, 0),
 	45,
 	rl.CameraPerspective,
 )
 
 var (
-	textures = []*Texture{}
+	textures      = []*Texture{}
+	mdbContainers = []*mdb.Container{}
+	mdbIndex      = -1
 )

@@ -6,6 +6,7 @@ import (
 	"os"
 
 	"github.com/AllenDang/cimgui-go/imgui"
+	"github.com/anasrar/odore/pkg/mdb"
 	"github.com/anasrar/odore/pkg/ppk"
 	rlig "github.com/anasrar/odore/pkg/raylib_imgui"
 	"github.com/anasrar/odore/pkg/t32"
@@ -57,8 +58,26 @@ func drop(input string) error {
 		}
 	}
 
+	tmpMDBContainers := []*mdb.Container{}
+	hasMDB := false
+	for _, entry := range ppkContainer.MDBContainer.Entries {
+		hasMDB = true
+
+		mdbContainer := mdb.New()
+		if err := mdb.FromStreamWithOffset(mdbContainer, file, entry.Offset); err != nil {
+			return err
+		}
+
+		tmpMDBContainers = append(tmpMDBContainers, mdbContainer)
+	}
+
 	cleanUpTextures()
 	textures = tmpTextures
+	mdbContainers = tmpMDBContainers
+	mdbIndex = -1
+	if hasMDB {
+		mdbIndex = 0
+	}
 
 	return nil
 }
@@ -139,8 +158,8 @@ func gui(input string) error {
 		imgui.BeginV("View", nil, imgui.WindowFlagsNoResize|imgui.WindowFlagsNoMove|imgui.WindowFlagsNoTitleBar)
 		imgui.ColorEdit3V("Background", &(background), imgui.ColorEditFlagsNoInputs)
 		if imgui.Button("Reset View") {
-			camera.Position = rl.NewVector3(0, 2.8, 2.8)
-			camera.Target = rl.NewVector3(0, 1.2, 0)
+			camera.Position = rl.NewVector3(0, 4.8, 3.8)
+			camera.Target = rl.NewVector3(0, 2.2, 0)
 		}
 		imgui.End()
 
@@ -154,6 +173,23 @@ func gui(input string) error {
 				imgui.Image(tex.Ref, imgui.NewVec2(float32(tex.Texture.Width), float32(tex.Texture.Height)))
 				imgui.EndTooltip()
 			}
+		}
+		imgui.End()
+
+		imgui.SetNextWindowPosV(imgui.NewVec2(12, 12), imgui.CondFirstUseEver, imgui.NewVec2(0, 0))
+		imgui.SetNextWindowSizeV(imgui.NewVec2(108, 200), imgui.CondFirstUseEver)
+		imgui.BeginV("MDB", nil, imgui.WindowFlagsNone)
+		for i := range mdbContainers {
+			filename := fmt.Sprintf("mdb_%02d", i)
+			imgui.PushIDStr(filename)
+			imgui.BeginDisabledV(i == mdbIndex)
+			if imgui.Button("View") {
+				mdbIndex = i
+			}
+			imgui.EndDisabled()
+			imgui.PopID()
+			imgui.SameLineV(0, 4)
+			imgui.Text(filename)
 		}
 		imgui.End()
 
@@ -185,6 +221,19 @@ func gui(input string) error {
 		rl.BeginMode3D(camera)
 
 		rl.DrawGrid(4, 0.5)
+
+		if mdbIndex != -1 {
+			c := mdbContainers[mdbIndex]
+			for _, vb := range c.VertexBuffers {
+				for _, position := range vb.ContainerPositions.Entries {
+					rl.DrawCubeV(
+						rl.NewVector3(position.X, position.Y, position.Z).Scale(c.Header.Scale),
+						rl.Vector3One().Scale(0.01),
+						rl.Red,
+					)
+				}
+			}
+		}
 
 		rl.EndMode3D()
 

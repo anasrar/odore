@@ -1,6 +1,14 @@
 // pl26.ppk
 // vi:ft=c
 
+struct Bone {
+    float x [[color("dc2626")]];
+    float y [[color("65a30d")]];
+    float z [[color("2563eb")]];
+    s16 parent_bone [[color("7c3aed")]];
+    s16 unknown0 [[color("525252")]];
+};
+
 struct VerterxBufferHeader {
     u32 position_address [[color("4f46e5")]];
     u32 normal_address [[color("3730a3")]];
@@ -21,9 +29,10 @@ struct MDBHeader {
     u32 skinning_format [[color("65a30d")]];
     u32 bone_index_table_address [[color("4f46e5")]];
     u32 bone_palette_table_address [[color("4f46e5")]];
-    float unknown1 [[color("c026d3")]];
+    float scale [[color("c026d3")]];
     u32 vertex_buffer_addresses[vertex_buffer_total] [[color("4f46e5")]];
 };
 
 MDBHeader mdbheader_at_0x2EB0 @ 0x2EB0;
 VerterxBufferHeader verterxbufferheader_at_0x3130 @ 0x3130;
+Bone bone_at_0x2F30[mdbheader_at_0x2EB0.bone_total] @ 0x2F30;

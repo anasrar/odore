@@ -248,6 +248,11 @@ func gui(input string) error {
 
 		if mdbIndex != -1 {
 			c := mdbContainers[mdbIndex]
+
+			rl.PushMatrix()
+			drawBone(c.BoneTree, c.Header.Scale)
+			rl.PopMatrix()
+
 			for _, vb := range c.VertexBuffers {
 				for _, position := range vb.ContainerPositions.Entries {
 					rl.DrawCubeV(

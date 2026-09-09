@@ -10,7 +10,9 @@ import (
 	"github.com/anasrar/odore/pkg/ppk"
 	rlig "github.com/anasrar/odore/pkg/raylib_imgui"
 	"github.com/anasrar/odore/pkg/t32"
+	"github.com/anasrar/odore/pkg/utils"
 	rl "github.com/gen2brain/raylib-go/raylib"
+	"github.com/qmuntal/gltf"
 )
 
 func cleanUpTextures() {
@@ -83,6 +85,7 @@ func drop(input string) error {
 }
 
 func gui(input string) error {
+	rl.SetConfigFlags(rl.FlagWindowResizable)
 	rl.InitWindow(int32(width), int32(height), "ppk Viewer")
 	defer rl.CloseWindow()
 	rl.SetTargetFPS(30)
@@ -191,6 +194,27 @@ func gui(input string) error {
 			imgui.SameLineV(0, 4)
 			imgui.Text(filename)
 		}
+		imgui.End()
+
+		imgui.SetNextWindowPosV(imgui.NewVec2(width-12, height-12), imgui.CondAlways, imgui.NewVec2(1, 1))
+		imgui.BeginV("GLTF", nil, imgui.WindowFlagsNoResize|imgui.WindowFlagsAlwaysAutoResize|imgui.WindowFlagsNoMove|imgui.WindowFlagsNoTitleBar)
+		imgui.BeginDisabledV(Input == "")
+		if imgui.Button("Convert To GLTF") {
+			go func() {
+				doc := gltf.NewDocument()
+				doc.Meshes = []*gltf.Mesh{}
+
+				for mdbIndex, entry := range mdbContainers {
+					if err := entry.ConvrtToGLTF(doc, mdbIndex); err != nil {
+						log.Print(err)
+						break
+					}
+				}
+
+				gltf.SaveBinary(doc, utils.GLTFPath(Input))
+			}()
+		}
+		imgui.EndDisabled()
 		imgui.End()
 
 		imgui.SetNextWindowPosV(imgui.NewVec2(12, height-12), imgui.CondAlways, imgui.NewVec2(0, 1))

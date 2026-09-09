@@ -31,3 +31,9 @@ func PackPath(path string) string {
 	directory := filepath.Dir(filepath.Clean(path))
 	return directory
 }
+
+func GLTFPath(path string) string {
+	filename := fmt.Sprintf("%s.glb", filepath.Base(path))
+	directory := filepath.Dir(filepath.Clean(path))
+	return filepath.Join(directory, filename)
+}

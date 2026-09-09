@@ -1,5 +1,10 @@
 package mdb
 
+import (
+	"github.com/qmuntal/gltf"
+	"github.com/qmuntal/gltf/modeler"
+)
+
 type VertexBufferPosition struct {
 	X    float32 `json:"x"`
 	Y    float32 `json:"y"`
@@ -26,6 +31,31 @@ type VertexBufferHeader struct {
 type VertexBufferContainer struct {
 	Header             VertexBufferHeader            `json:"header"`
 	ContainerPositions VertexBufferContainerPosition `json:"positions"`
+}
+
+func (vb *VertexBufferContainer) ConvertToGLTFPrimitive(doc *gltf.Document, scale float32) *gltf.Primitive {
+	vertices := [][3]float32{}
+	indecies := []uint16{}
+
+	for i, pos := range vb.ContainerPositions.Entries {
+		ii := uint16(i)
+		vertices = append(vertices, [3]float32{pos.X * scale, pos.Y * scale, pos.Z * scale})
+
+		if pos.Flag == 0x8000 {
+			continue
+		} else if pos.Flag == 0x0 {
+			indecies = append(indecies, ii-2, ii-1, ii)
+		} else if pos.Flag == 0x1 {
+			indecies = append(indecies, ii-1, ii-2, ii)
+		}
+	}
+
+	return &gltf.Primitive{
+		Indices: gltf.Index(modeler.WriteIndices(doc, indecies)),
+		Attributes: gltf.PrimitiveAttributes{
+			gltf.POSITION: modeler.WritePosition(doc, vertices),
+		},
+	}
 }
 
 func NewVertexBufferContainer() *VertexBufferContainer {

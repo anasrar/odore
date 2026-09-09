@@ -7,6 +7,7 @@ import (
 
 	"github.com/anasrar/binarium"
 	"github.com/anasrar/odore/pkg/utils"
+	"github.com/qmuntal/gltf"
 )
 
 type Header struct {
@@ -18,7 +19,7 @@ type Header struct {
 	SkinningFormat         uint32   `json:"skinning_format"`
 	BoneIndexTableOffset   uint32   `json:""`
 	BonePaletteTableOffset uint32   `json:"bone_palette_table_offset"`
-	Scale                  float32  `json:"unknown1"`
+	Scale                  float32  `json:"scale"`
 	VertexBufferOffsets    []uint32 `json:"vertex_buffer_offsets" length:"VertexBufferTotal"`
 }
 
@@ -82,6 +83,32 @@ func (c *Container) unmarshal(stream io.ReadSeeker) error {
 
 		c.VertexBuffers = append(c.VertexBuffers, vbContainer)
 	}
+
+	return nil
+}
+
+func (c *Container) ConvrtToGLTF(doc *gltf.Document, mdbIndex int) error {
+	name := fmt.Sprintf("mdb_%03d", mdbIndex)
+
+	mesh := &gltf.Mesh{
+		Name:       name,
+		Primitives: []*gltf.Primitive{},
+	}
+
+	for _, entry := range c.VertexBuffers {
+		primitive := entry.ConvertToGLTFPrimitive(doc, c.Header.Scale)
+		mesh.Primitives = append(mesh.Primitives, primitive)
+	}
+
+	doc.Meshes = append(doc.Meshes, mesh)
+
+	meshIndex := gltf.Index(len(doc.Meshes) - 1)
+	doc.Nodes = append(doc.Nodes, &gltf.Node{
+		Name: name,
+		Mesh: meshIndex,
+	})
+
+	doc.Scenes[0].Nodes = append(doc.Scenes[0].Nodes, len(doc.Nodes)-1)
 
 	return nil
 }

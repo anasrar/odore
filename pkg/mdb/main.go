@@ -26,11 +26,25 @@ type Header struct {
 type Container struct {
 	Offset        uint32                   `json:"offset" skip:""`
 	Header        Header                   `json:"header"`
+	Bones         *BoneContainer           `json:"bones"`
+	BoneTree      *BoneNode                `json:"bone_tree"`
 	VertexBuffers []*VertexBufferContainer `json:"vertex_buffers"`
 }
 
 func New() *Container {
 	return &Container{
+		Bones: &BoneContainer{},
+		BoneTree: &BoneNode{
+			Bone: Bone{
+				X:        0,
+				Y:        0,
+				Z:        0,
+				Parent:   -1,
+				Unknown0: -1,
+			},
+			Parent:   nil,
+			Children: []*BoneNode{},
+		},
 		VertexBuffers: []*VertexBufferContainer{},
 	}
 }
@@ -59,6 +73,34 @@ func (c *Container) unmarshal(stream io.ReadSeeker) error {
 
 	if Signature != c.Header.Signature {
 		return utils.ErrSignatureIsNotMatch(Signature, c.Header.Signature)
+	}
+
+	if c.Header.BoneTotal != 0 {
+		c.Bones.Total = c.Header.BoneTotal
+		boneOffset := uint64(c.Header.BoneOffset)
+
+		if err := utils.SeekAbsolute(stream, baseOffset+boneOffset); err != nil {
+			return err
+		}
+
+		if err := binarium.UnmarshalWithReader(stream, binary.LittleEndian, c.Bones); err != nil {
+			return err
+		}
+
+		bones := make(map[int16]*BoneNode, 0)
+		bones[-1] = c.BoneTree
+
+		for boneIndex, entry := range c.Bones.Entries {
+			parent := bones[entry.Parent]
+			bone := &BoneNode{
+				Bone:     entry,
+				Parent:   parent,
+				Children: []*BoneNode{},
+			}
+
+			bones[int16(boneIndex)] = bone
+			parent.Children = append(parent.Children, bone)
+		}
 	}
 
 	for _, offset := range c.Header.VertexBufferOffsets {

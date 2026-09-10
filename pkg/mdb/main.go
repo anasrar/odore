@@ -148,27 +148,35 @@ func (c *Container) unmarshal(stream io.ReadSeeker) error {
 }
 
 func (c *Container) ConvrtToGLTF(doc *gltf.Document, mdbIndex int) error {
-	name := fmt.Sprintf("mdb_%03d", mdbIndex)
-
-	mesh := &gltf.Mesh{
-		Name:       name,
-		Primitives: []*gltf.Primitive{},
+	node := &gltf.Node{
+		Name: fmt.Sprintf("mdb_%03d", mdbIndex),
 	}
+	doc.Nodes = append(doc.Nodes, node)
+	doc.Scenes[0].Nodes = append(doc.Scenes[0].Nodes, len(doc.Nodes)-1)
 
-	for _, entry := range c.VertexBuffers {
+	for vbIndex, entry := range c.VertexBuffers {
+		name := fmt.Sprintf("mdb_%03d_%03d", mdbIndex, vbIndex)
+
+		mesh := &gltf.Mesh{
+			Name:       name,
+			Primitives: []*gltf.Primitive{},
+		}
+
 		primitive := entry.ConvertToGLTFPrimitive(doc, c.Header.Scale)
 		mesh.Primitives = append(mesh.Primitives, primitive)
+
+		doc.Meshes = append(doc.Meshes, mesh)
+
+		meshIndex := gltf.Index(len(doc.Meshes) - 1)
+		vbNode := &gltf.Node{
+			Name: name,
+			Mesh: meshIndex,
+		}
+		doc.Nodes = append(doc.Nodes, vbNode)
+
+		vbNodeIndex := len(doc.Nodes) - 1
+		node.Children = append(node.Children, vbNodeIndex)
 	}
-
-	doc.Meshes = append(doc.Meshes, mesh)
-
-	meshIndex := gltf.Index(len(doc.Meshes) - 1)
-	doc.Nodes = append(doc.Nodes, &gltf.Node{
-		Name: name,
-		Mesh: meshIndex,
-	})
-
-	doc.Scenes[0].Nodes = append(doc.Scenes[0].Nodes, len(doc.Nodes)-1)
 
 	return nil
 }

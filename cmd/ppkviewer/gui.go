@@ -1,7 +1,9 @@
 package main
 
 import (
+	"bytes"
 	"fmt"
+	"image/png"
 	"log"
 	"os"
 
@@ -13,6 +15,7 @@ import (
 	"github.com/anasrar/odore/pkg/utils"
 	rl "github.com/gen2brain/raylib-go/raylib"
 	"github.com/qmuntal/gltf"
+	"github.com/qmuntal/gltf/modeler"
 )
 
 func cleanUpTextures() {
@@ -51,11 +54,17 @@ func drop(input string) error {
 
 				filename := fmt.Sprintf("index_%03d_texture_%03d_palette_%03d.png", t32Index, textureIndex, paletteIndex)
 
-				img := rl.NewImageFromImage(decoded.Image())
+				deimg := decoded.Image()
+				img := rl.NewImageFromImage(deimg)
 				defer rl.UnloadImage(img)
 				tex := rl.LoadTextureFromImage(img)
 
-				tmpTextures = append(tmpTextures, TextureNew(filename, tex))
+				var buf bytes.Buffer
+				if err := png.Encode(&buf, deimg); err != nil {
+					return err
+				}
+
+				tmpTextures = append(tmpTextures, TextureNew(filename, tex, buf.Bytes()))
 			}
 		}
 	}
@@ -202,6 +211,29 @@ func gui(input string) error {
 		if imgui.Button("Convert To GLTF") {
 			go func() {
 				doc := gltf.NewDocument()
+				zero := float64(0)
+				one := float64(1)
+
+				for t32Index, entry := range textures {
+					texIndex, _ := modeler.WriteImage(doc, fmt.Sprintf("%03d", t32Index), "image/png", bytes.NewReader(entry.PNG))
+					doc.Textures = append(doc.Textures, &gltf.Texture{
+						Source: gltf.Index(texIndex),
+					})
+
+					doc.Materials = append(doc.Materials,
+						&gltf.Material{
+							PBRMetallicRoughness: &gltf.PBRMetallicRoughness{
+								BaseColorTexture: &gltf.TextureInfo{
+									Index: texIndex,
+								},
+								MetallicFactor:  &zero,
+								RoughnessFactor: &one,
+							},
+							AlphaMode: gltf.AlphaMask,
+						},
+					)
+				}
+
 				doc.Meshes = []*gltf.Mesh{}
 
 				for mdbIndex, entry := range mdbContainers {
@@ -212,6 +244,7 @@ func gui(input string) error {
 				}
 
 				gltf.SaveBinary(doc, utils.GLTFPath(Input))
+				log.Print("GLTF success")
 			}()
 		}
 		imgui.EndDisabled()

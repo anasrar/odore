@@ -9,12 +9,14 @@ type Texture struct {
 	Name    string
 	Texture rl.Texture2D
 	Ref     imgui.TextureRef
+	PNG     []byte
 }
 
-func TextureNew(name string, texture rl.Texture2D) *Texture {
+func TextureNew(name string, texture rl.Texture2D, png []byte) *Texture {
 	return &Texture{
 		Name:    name,
 		Texture: texture,
 		Ref:     *imgui.NewTextureRefTextureID(imgui.TextureID(texture.ID)),
+		PNG:     png,
 	}
 }

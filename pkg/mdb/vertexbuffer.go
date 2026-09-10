@@ -52,6 +52,14 @@ func (vb *VertexBufferContainer) ConvertToGLTFPrimitive(doc *gltf.Document, scal
 		attributes[gltf.NORMAL] = modeler.WriteNormal(doc, normals)
 	}
 
+	if vb.Header.UVOffset != 0 {
+		uvs := make([][2]float32, vb.ContainerUVs.Total)
+		for i, uv := range vb.ContainerUVs.Entries {
+			uvs[i] = [2]float32{uv.U, (uv.V) + 1}
+		}
+		attributes[gltf.TEXCOORD_0] = modeler.WriteTextureCoord(doc, uvs)
+	}
+
 	return &gltf.Primitive{
 		Indices:    gltf.Index(modeler.WriteIndices(doc, indices)),
 		Attributes: attributes,

@@ -20,6 +20,7 @@ type VertexBufferContainer struct {
 	Header             VertexBufferHeader `json:"header"`
 	ContainerPositions PositionContainer  `json:"positions"`
 	ContainerNormals   NormalContainer    `json:"normals"`
+	ContainerUVs       UVContainer        `json:"uvs"`
 }
 
 func (vb *VertexBufferContainer) ConvertToGLTFPrimitive(doc *gltf.Document, scale float32) *gltf.Primitive {

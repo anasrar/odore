@@ -5,18 +5,6 @@ import (
 	"github.com/qmuntal/gltf/modeler"
 )
 
-type VertexBufferPosition struct {
-	X    float32 `json:"x"`
-	Y    float32 `json:"y"`
-	Z    float32 `json:"z"`
-	Flag uint32  `json:"flag"`
-}
-
-type VertexBufferContainerPosition struct {
-	Total   uint16                 `json:"vertex_total" skip:""`
-	Entries []VertexBufferPosition `json:"entries" length:"Total"`
-}
-
 type VertexBufferHeader struct {
 	PositionOffset uint32 `json:"position_offset"`
 	NormalOffset   uint32 `json:"normal_offset"`
@@ -29,9 +17,9 @@ type VertexBufferHeader struct {
 }
 
 type VertexBufferContainer struct {
-	Header             VertexBufferHeader            `json:"header"`
-	ContainerPositions VertexBufferContainerPosition `json:"positions"`
-	ContainerNormals   NormalContainer               `json:"normals"`
+	Header             VertexBufferHeader `json:"header"`
+	ContainerPositions PositionContainer  `json:"positions"`
+	ContainerNormals   NormalContainer    `json:"normals"`
 }
 
 func (vb *VertexBufferContainer) ConvertToGLTFPrimitive(doc *gltf.Document, scale float32) *gltf.Primitive {

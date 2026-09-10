@@ -16,6 +16,13 @@ struct Normal {
     float w [[color("7c3aed")]];
 };
 
+struct UV {
+    float u [[color("dc2626")]];
+    float v [[color("65a30d")]];
+    float q [[color("2563eb")]];
+    float w [[color("7c3aed")]];
+};
+
 struct VerterxBufferHeader {
     u32 position_address [[color("4f46e5")]];
     u32 normal_address [[color("3730a3")]];
@@ -44,3 +51,4 @@ MDBHeader mdbheader_at_0x2EB0 @ 0x2EB0;
 VerterxBufferHeader verterxbufferheader_at_0x3130 @ 0x3130;
 Bone bone_at_0x2F30[mdbheader_at_0x2EB0.bone_total] @ 0x2F30;
 Normal normal_at_0x3430[verterxbufferheader_at_0x3130.vertex_total] @ 0x3430;
+UV uv_at_0x36B0[verterxbufferheader_at_0x3130.vertex_total] @ 0x36B0;

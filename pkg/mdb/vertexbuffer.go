@@ -24,7 +24,7 @@ type VertexBufferContainer struct {
 
 func (vb *VertexBufferContainer) ConvertToGLTFPrimitive(doc *gltf.Document, scale float32) *gltf.Primitive {
 	vertices := [][3]float32{}
-	indecies := []uint16{}
+	indices := []uint16{}
 
 	for i, pos := range vb.ContainerPositions.Entries {
 		ii := uint16(i)
@@ -33,17 +33,27 @@ func (vb *VertexBufferContainer) ConvertToGLTFPrimitive(doc *gltf.Document, scal
 		if pos.Flag == 0x8000 {
 			continue
 		} else if pos.Flag == 0x0 {
-			indecies = append(indecies, ii-2, ii-1, ii)
+			indices = append(indices, ii-2, ii-1, ii)
 		} else if pos.Flag == 0x1 {
-			indecies = append(indecies, ii-1, ii-2, ii)
+			indices = append(indices, ii-1, ii-2, ii)
 		}
 	}
 
+	attributes := gltf.PrimitiveAttributes{
+		gltf.POSITION: modeler.WritePosition(doc, vertices),
+	}
+
+	if vb.Header.NormalOffset != 0 {
+		normals := make([][3]float32, vb.ContainerNormals.Total)
+		for i, normal := range vb.ContainerNormals.Entries {
+			normals[i] = [3]float32{normal.X, normal.Y, normal.Z}
+		}
+		attributes[gltf.NORMAL] = modeler.WriteNormal(doc, normals)
+	}
+
 	return &gltf.Primitive{
-		Indices: gltf.Index(modeler.WriteIndices(doc, indecies)),
-		Attributes: gltf.PrimitiveAttributes{
-			gltf.POSITION: modeler.WritePosition(doc, vertices),
-		},
+		Indices:    gltf.Index(modeler.WriteIndices(doc, indices)),
+		Attributes: attributes,
 	}
 }
 

@@ -8,6 +8,6 @@ type Position struct {
 }
 
 type PositionContainer struct {
-	Total   uint16                 `json:"vertex_total" skip:""`
-	Entries []VertexBufferPosition `json:"entries" length:"Total"`
+	Total   uint16     `json:"vertex_total" skip:""`
+	Entries []Position `json:"entries" length:"Total"`
 }

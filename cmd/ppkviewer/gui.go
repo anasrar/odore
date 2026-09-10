@@ -12,10 +12,7 @@ import (
 	"github.com/anasrar/odore/pkg/ppk"
 	rlig "github.com/anasrar/odore/pkg/raylib_imgui"
 	"github.com/anasrar/odore/pkg/t32"
-	"github.com/anasrar/odore/pkg/utils"
 	rl "github.com/gen2brain/raylib-go/raylib"
-	"github.com/qmuntal/gltf"
-	"github.com/qmuntal/gltf/modeler"
 )
 
 func cleanUpTextures() {
@@ -210,41 +207,11 @@ func gui(input string) error {
 		imgui.BeginDisabledV(Input == "")
 		if imgui.Button("Convert To GLTF") {
 			go func() {
-				doc := gltf.NewDocument()
-				zero := float64(0)
-				one := float64(1)
-
-				for t32Index, entry := range textures {
-					texIndex, _ := modeler.WriteImage(doc, fmt.Sprintf("%03d", t32Index), "image/png", bytes.NewReader(entry.PNG))
-					doc.Textures = append(doc.Textures, &gltf.Texture{
-						Source: gltf.Index(texIndex),
-					})
-
-					doc.Materials = append(doc.Materials,
-						&gltf.Material{
-							PBRMetallicRoughness: &gltf.PBRMetallicRoughness{
-								BaseColorTexture: &gltf.TextureInfo{
-									Index: texIndex,
-								},
-								MetallicFactor:  &zero,
-								RoughnessFactor: &one,
-							},
-							AlphaMode: gltf.AlphaMask,
-						},
-					)
+				if err := convrtToGLTF(); err != nil {
+					log.Print(err)
+				} else {
+					log.Print("GLTF created")
 				}
-
-				doc.Meshes = []*gltf.Mesh{}
-
-				for mdbIndex, entry := range mdbContainers {
-					if err := entry.ConvrtToGLTF(doc, mdbIndex); err != nil {
-						log.Print(err)
-						break
-					}
-				}
-
-				gltf.SaveBinary(doc, utils.GLTFPath(Input))
-				log.Print("GLTF success")
 			}()
 		}
 		imgui.EndDisabled()

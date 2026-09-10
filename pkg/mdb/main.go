@@ -123,6 +123,16 @@ func (c *Container) unmarshal(stream io.ReadSeeker) error {
 			return err
 		}
 
+		if vbContainer.Header.NormalOffset != 0 {
+			vbContainer.ContainerNormals.Total = vbContainer.Header.VertexTotal
+			if err := utils.SeekAbsolute(stream, baseOffset+vbOffset+uint64(vbContainer.Header.NormalOffset)); err != nil {
+				return err
+			}
+			if err := binarium.UnmarshalWithReader(stream, binary.LittleEndian, &vbContainer.ContainerNormals); err != nil {
+				return err
+			}
+		}
+
 		c.VertexBuffers = append(c.VertexBuffers, vbContainer)
 	}
 

@@ -28,6 +28,7 @@ type Container struct {
 	Header        Header                   `json:"header"`
 	Bones         *BoneContainer           `json:"bones"`
 	BoneTree      *BoneNode                `json:"bone_tree"`
+	BonePalettes  []*BonePalette           `json:"bone_palettes"`
 	VertexBuffers []*VertexBufferContainer `json:"vertex_buffers"`
 }
 
@@ -45,6 +46,7 @@ func New() *Container {
 			Parent:   nil,
 			Children: []*BoneNode{},
 		},
+		BonePalettes:  []*BonePalette{},
 		VertexBuffers: []*VertexBufferContainer{},
 	}
 }
@@ -100,6 +102,31 @@ func (c *Container) unmarshal(stream io.ReadSeeker) error {
 
 			bones[int16(boneIndex)] = bone
 			parent.Children = append(parent.Children, bone)
+		}
+	}
+
+	if c.Header.BonePaletteTableOffset != 0 {
+		paletteBaseOffset := baseOffset + uint64(c.Header.BonePaletteTableOffset)
+
+		if err := utils.SeekAbsolute(stream, paletteBaseOffset); err != nil {
+			return err
+		}
+
+		paletteHeader := BonePaletteHeader{}
+		if err := binarium.UnmarshalWithReader(stream, binary.LittleEndian, &paletteHeader); err != nil {
+			return err
+		}
+
+		for _, entry := range paletteHeader.Entries {
+			palette := &BonePalette{Total: entry.Total}
+
+			if err := utils.SeekAbsolute(stream, paletteBaseOffset+uint64(entry.Offset)); err != nil {
+				return err
+			}
+			if err := binarium.UnmarshalWithReader(stream, binary.LittleEndian, palette); err != nil {
+				return err
+			}
+			c.BonePalettes = append(c.BonePalettes, palette)
 		}
 	}
 

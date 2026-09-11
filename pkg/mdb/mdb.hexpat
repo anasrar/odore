@@ -9,6 +9,16 @@ struct Bone {
     s16 unknown0 [[color("525252")]];
 };
 
+struct BonePaletteAddress {
+    u32 address [[color("dc2626")]];
+    u32 total [[color("2563eb")]];
+};
+
+struct BonePaletteHeader {
+    u32 total [[color("65a30d")]];
+    BonePaletteAddress adresses[total];
+};
+
 struct Normal {
     float x [[color("dc2626")]];
     float y [[color("65a30d")]];
@@ -52,3 +62,7 @@ VerterxBufferHeader verterxbufferheader_at_0x3130 @ 0x3130;
 Bone bone_at_0x2F30[mdbheader_at_0x2EB0.bone_total] @ 0x2F30;
 Normal normal_at_0x3430[verterxbufferheader_at_0x3130.vertex_total] @ 0x3430;
 UV uv_at_0x36B0[verterxbufferheader_at_0x3130.vertex_total] @ 0x36B0;
+BonePaletteHeader bonepaletteheader_at_0x53930 @ 0x53930;
+u8 u8_array_at_0x5398C[19] @ 0x5398C;
+u8 u8_array_at_0x5399F[20] @ 0x5399F;
+u8 u8_array_at_0x539B3[3] @ 0x539B3;

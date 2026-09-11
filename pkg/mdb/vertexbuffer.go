@@ -21,6 +21,7 @@ type VertexBufferContainer struct {
 	ContainerPositions PositionContainer  `json:"positions"`
 	ContainerNormals   NormalContainer    `json:"normals"`
 	ContainerUVs       UVContainer        `json:"uvs"`
+	ContainerWeights   WeightContainer    `json:"weights"`
 }
 
 func (vb *VertexBufferContainer) ConvertToGLTFPrimitive(doc *gltf.Document, scale float32) *gltf.Primitive {

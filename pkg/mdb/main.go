@@ -168,6 +168,22 @@ func (c *Container) unmarshal(stream io.ReadSeeker) error {
 			return err
 		}
 
+		if vbContainer.Header.WeightOffset != 0 {
+			paletteIndex := int(vbContainer.Header.Material)
+
+			if paletteIndex >= len(c.BonePalettes) {
+				return fmt.Errorf("bone palette index %d is outside palette total %d", paletteIndex, len(c.BonePalettes))
+			}
+
+			vbContainer.ContainerWeights.Total = vbContainer.Header.VertexTotal
+			if err := utils.SeekAbsolute(stream, baseOffset+vbOffset+uint64(vbContainer.Header.WeightOffset)); err != nil {
+				return err
+			}
+			if err := vbContainer.ContainerWeights.unmarshal(stream, c.Header.SkinningFormat, c.BonePalettes[paletteIndex].Entries); err != nil {
+				return err
+			}
+		}
+
 		c.VertexBuffers = append(c.VertexBuffers, vbContainer)
 	}
 

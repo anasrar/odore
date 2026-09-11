@@ -61,6 +61,17 @@ func (vb *VertexBufferContainer) ConvertToGLTFPrimitive(doc *gltf.Document, scal
 		attributes[gltf.TEXCOORD_0] = modeler.WriteTextureCoord(doc, uvs)
 	}
 
+	if vb.Header.WeightOffset != 0 {
+		joints := make([][4]uint16, vb.ContainerWeights.Total)
+		weights := make([][4]float32, vb.ContainerWeights.Total)
+		for i, weight := range vb.ContainerWeights.Entries {
+			joints[i] = [4]uint16{weight.Joint0, weight.Joint1, weight.Joint2, weight.Joint3}
+			weights[i] = [4]float32{weight.Weight0, weight.Weight1, weight.Weight2, weight.Weight3}
+		}
+		attributes[gltf.JOINTS_0] = modeler.WriteJoints(doc, joints)
+		attributes[gltf.WEIGHTS_0] = modeler.WriteWeights(doc, weights)
+	}
+
 	return &gltf.Primitive{
 		Indices:    gltf.Index(modeler.WriteIndices(doc, indices)),
 		Attributes: attributes,

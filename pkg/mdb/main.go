@@ -36,6 +36,7 @@ func New() *Container {
 	return &Container{
 		Bones: &BoneContainer{},
 		BoneTree: &BoneNode{
+			Index: -1,
 			Bone: Bone{
 				X:        0,
 				Y:        0,
@@ -95,6 +96,7 @@ func (c *Container) unmarshal(stream io.ReadSeeker) error {
 		for boneIndex, entry := range c.Bones.Entries {
 			parent := bones[entry.Parent]
 			bone := &BoneNode{
+				Index:    boneIndex,
 				Bone:     entry,
 				Parent:   parent,
 				Children: []*BoneNode{},
@@ -197,7 +199,21 @@ func (c *Container) ConvrtToGLTF(doc *gltf.Document, mdbIndex int) error {
 	doc.Nodes = append(doc.Nodes, node)
 	doc.Scenes[0].Nodes = append(doc.Scenes[0].Nodes, len(doc.Nodes)-1)
 
+	var skinIndex *int
+	if c.Header.BoneTotal != 0 {
+		index, err := c.BoneTree.ConvertToGLTFSkin(doc, mdbIndex, c.Header.BoneTotal, c.Header.Scale)
+		if err != nil {
+			return err
+		}
+		skinIndex = gltf.Index(index)
+		node.Children = append(node.Children, *doc.Skins[index].Skeleton)
+	}
+
 	for vbIndex, entry := range c.VertexBuffers {
+		if entry.Header.WeightOffset != 0 && skinIndex == nil {
+			return fmt.Errorf("MDB %d vertex buffer %d has weights but no bones", mdbIndex, vbIndex)
+		}
+
 		name := fmt.Sprintf("mdb_%03d_%03d", mdbIndex, vbIndex)
 
 		mesh := &gltf.Mesh{
@@ -215,6 +231,11 @@ func (c *Container) ConvrtToGLTF(doc *gltf.Document, mdbIndex int) error {
 			Name: name,
 			Mesh: meshIndex,
 		}
+
+		if entry.Header.WeightOffset != 0 {
+			vbNode.Skin = skinIndex
+		}
+
 		doc.Nodes = append(doc.Nodes, vbNode)
 
 		vbNodeIndex := len(doc.Nodes) - 1

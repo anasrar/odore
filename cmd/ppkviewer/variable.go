@@ -28,5 +28,6 @@ var camera = rl.NewCamera3D(
 var (
 	textures      = []*Texture{}
 	mdbContainers = []*mdb.Container{}
+	models        = []*Model{}
 	mdbIndex      = -1
 )

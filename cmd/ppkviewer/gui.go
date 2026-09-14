@@ -22,6 +22,12 @@ func cleanUpTextures() {
 	}
 }
 
+func cleanUpModels() {
+	for _, entry := range models {
+		entry.Unload()
+	}
+}
+
 func drop(input string) error {
 	file, err := os.Open(input)
 	if err != nil {
@@ -79,9 +85,16 @@ func drop(input string) error {
 		tmpMDBContainers = append(tmpMDBContainers, mdbContainer)
 	}
 
+	tmpModels := []*Model{}
+	for _, entry := range tmpMDBContainers {
+		tmpModels = append(tmpModels, ModelNew(entry))
+	}
+
+	cleanUpModels()
 	cleanUpTextures()
 	textures = tmpTextures
 	mdbContainers = tmpMDBContainers
+	models = tmpModels
 	mdbIndex = -1
 	if hasMDB {
 		mdbIndex = 0
@@ -100,6 +113,7 @@ func gui(input string) error {
 	defer rlig.Unload()
 
 	defer cleanUpTextures()
+	defer cleanUpModels()
 
 	if input != "" {
 		Input = input
@@ -186,7 +200,7 @@ func gui(input string) error {
 		imgui.End()
 
 		imgui.SetNextWindowPosV(imgui.NewVec2(12, 12), imgui.CondFirstUseEver, imgui.NewVec2(0, 0))
-		imgui.SetNextWindowSizeV(imgui.NewVec2(108, 200), imgui.CondFirstUseEver)
+		imgui.SetNextWindowSizeV(imgui.NewVec2(142, 200), imgui.CondFirstUseEver)
 		imgui.BeginV("MDB", nil, imgui.WindowFlagsNone)
 		for i := range mdbContainers {
 			filename := fmt.Sprintf("mdb_%02d", i)
@@ -199,6 +213,10 @@ func gui(input string) error {
 			imgui.PopID()
 			imgui.SameLineV(0, 4)
 			imgui.Text(filename)
+			texture := fmt.Sprintf("texture_%02d", i)
+			imgui.PushIDStr(texture)
+			imgui.SliderInt("T32 index", &models[i].TextureIndex, 0, int32(len(textures)-1))
+			imgui.PopID()
 		}
 		imgui.End()
 
@@ -253,15 +271,7 @@ func gui(input string) error {
 			drawBone(c.BoneTree, c.Header.Scale)
 			rl.PopMatrix()
 
-			for _, vb := range c.VertexBuffers {
-				for _, position := range vb.ContainerPositions.Entries {
-					rl.DrawCubeV(
-						rl.NewVector3(position.X, position.Y, position.Z).Scale(c.Header.Scale),
-						rl.Vector3One().Scale(0.01),
-						rl.Red,
-					)
-				}
-			}
+			models[mdbIndex].Draw()
 		}
 
 		rl.EndMode3D()

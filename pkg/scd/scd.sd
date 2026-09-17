@@ -1,0 +1,8 @@
+// r020.sd
+// vi:ft=c
+
+struct SCDHeader {
+    u32 signature [[color("dc2626")]];
+};
+
+SCDHeader header @ 0xC0;

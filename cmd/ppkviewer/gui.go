@@ -105,7 +105,7 @@ func drop(input string) error {
 
 func gui(input string) error {
 	rl.SetConfigFlags(rl.FlagWindowResizable)
-	rl.InitWindow(int32(width), int32(height), "ppk Viewer")
+	rl.InitWindow(int32(width), int32(height), "PPK Viewer")
 	defer rl.CloseWindow()
 	rl.SetTargetFPS(30)
 

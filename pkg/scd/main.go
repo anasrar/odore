@@ -6,6 +6,7 @@ import (
 	"io"
 
 	"github.com/anasrar/binarium"
+	"github.com/anasrar/odore/pkg/mdb"
 	"github.com/anasrar/odore/pkg/utils"
 )
 
@@ -22,8 +23,9 @@ type Header struct {
 }
 
 type Container struct {
-	Offset uint32 `json:"offset" skip:""`
-	Header Header `json:"header"`
+	Offset        uint32           `json:"offset" skip:""`
+	Header        Header           `json:"header"`
+	MDBContainers []*mdb.Container `json:"mdb_containers"`
 }
 
 func New() *Container {
@@ -54,6 +56,14 @@ func (c *Container) unmarshal(stream io.ReadSeeker) error {
 
 	if Signature != c.Header.Signature {
 		return utils.ErrSignatureIsNotMatch(Signature, c.Header.Signature)
+	}
+
+	for _, entry := range c.Header.SceneObjects {
+		mdbContainer := mdb.New()
+		if err := mdb.FromStreamWithOffset(mdbContainer, stream, c.Offset+entry.MDBOffset); err != nil {
+			return err
+		}
+		c.MDBContainers = append(c.MDBContainers, mdbContainer)
 	}
 
 	return nil

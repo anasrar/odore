@@ -63,24 +63,24 @@ func gui(input string) error {
 		}
 
 		if rl.IsKeyDown(rl.KeyW) {
-			rl.CameraMoveForward(&camera, 1*rl.GetFrameTime(), 0)
+			rl.CameraMoveForward(&camera, cameraMoveSpeed*rl.GetFrameTime(), 0)
 		}
 		if rl.IsKeyDown(rl.KeyS) {
-			rl.CameraMoveForward(&camera, -1*rl.GetFrameTime(), 0)
+			rl.CameraMoveForward(&camera, -cameraMoveSpeed*rl.GetFrameTime(), 0)
 		}
 
 		if rl.IsKeyDown(rl.KeyA) {
-			rl.CameraMoveRight(&camera, -1*rl.GetFrameTime(), 0)
+			rl.CameraMoveRight(&camera, -cameraMoveSpeed*rl.GetFrameTime(), 0)
 		}
 		if rl.IsKeyDown(rl.KeyD) {
-			rl.CameraMoveRight(&camera, 1*rl.GetFrameTime(), 0)
+			rl.CameraMoveRight(&camera, cameraMoveSpeed*rl.GetFrameTime(), 0)
 		}
 
 		if rl.IsKeyDown(rl.KeyQ) {
-			rl.CameraMoveUp(&camera, -1*rl.GetFrameTime())
+			rl.CameraMoveUp(&camera, -cameraMoveSpeed*rl.GetFrameTime())
 		}
 		if rl.IsKeyDown(rl.KeyE) {
-			rl.CameraMoveUp(&camera, 1*rl.GetFrameTime())
+			rl.CameraMoveUp(&camera, cameraMoveSpeed*rl.GetFrameTime())
 		}
 
 		if rl.IsKeyDown(rl.KeyLeft) {
@@ -106,6 +106,12 @@ func gui(input string) error {
 			camera.Position = rl.NewVector3(0, 4.8, 3.8)
 			camera.Target = rl.NewVector3(0, 2.2, 0)
 		}
+		imgui.End()
+
+		imgui.SetNextWindowPosV(imgui.NewVec2(width-12, height-12), imgui.CondAlways, imgui.NewVec2(1, 1))
+		imgui.SetNextWindowSizeV(imgui.NewVec2(300, 0), imgui.CondOnce)
+		imgui.BeginV("Camera", nil, imgui.WindowFlagsNoResize|imgui.WindowFlagsNoMove)
+		imgui.SliderFloat("Move Speed", &cameraMoveSpeed, 1, 1000)
 		imgui.End()
 
 		imgui.SetNextWindowPosV(imgui.NewVec2(12, height-12), imgui.CondAlways, imgui.NewVec2(0, 1))
@@ -138,12 +144,29 @@ func gui(input string) error {
 		rl.DrawGrid(4, 0.5)
 
 		if container != nil {
-			for _, entry := range container.SCDContainer.Header.SceneObjects {
+			for i, entry := range container.SCDContainer.Header.SceneObjects {
+				rl.PushMatrix()
+				rl.Translatef(entry.Position.X, entry.Position.Y, entry.Position.Z)
+
 				rl.DrawCubeV(
-					rl.NewVector3(entry.Position.X, entry.Position.Y, entry.Position.Z).Scale(0.02),
-					rl.Vector3One().Scale(0.5),
-					rl.Green,
+					rl.Vector3Zero(),
+					rl.Vector3One().Scale(20),
+					rl.Yellow,
 				)
+
+				mdbContainter := container.SCDContainer.MDBContainers[i]
+
+				for _, vb := range mdbContainter.VertexBuffers {
+					for _, pos := range vb.ContainerPositions.Entries {
+						rl.DrawCubeV(
+							rl.NewVector3(pos.X, pos.Y, pos.Z),
+							rl.Vector3One().Scale(5),
+							rl.Purple,
+						)
+					}
+				}
+
+				rl.PopMatrix()
 			}
 		}
 

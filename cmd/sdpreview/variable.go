@@ -17,12 +17,15 @@ var (
 	Input string
 )
 
-var camera = rl.NewCamera3D(
-	rl.NewVector3(0, 4.8, 3.8),
-	rl.NewVector3(0, 2.2, 0),
-	rl.NewVector3(0, 1, 0),
-	45,
-	rl.CameraPerspective,
+var (
+	camera = rl.NewCamera3D(
+		rl.NewVector3(0, 4.8, 3.8),
+		rl.NewVector3(0, 2.2, 0),
+		rl.NewVector3(0, 1, 0),
+		45,
+		rl.CameraPerspective,
+	)
+	cameraMoveSpeed = float32(1)
 )
 
 var (

@@ -7,8 +7,8 @@ import (
 )
 
 var cmd = &cobra.Command{
-	Use:   "ppkviewer",
-	Short: "View 3D model on PPK",
+	Use:   "sdviewer",
+	Short: "View 3D model on SD",
 	Run: func(cmd *cobra.Command, args []string) {
 		if err := gui(Input); err != nil {
 			log.Fatal(err)

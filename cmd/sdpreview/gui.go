@@ -11,6 +11,12 @@ import (
 	rl "github.com/gen2brain/raylib-go/raylib"
 )
 
+func cleanUpModels() {
+	for _, entry := range models {
+		entry.Unload()
+	}
+}
+
 func drop(input string) error {
 	file, err := os.Open(input)
 	if err != nil {
@@ -23,7 +29,15 @@ func drop(input string) error {
 		return err
 	}
 
-	container = sdContainer
+	tmpModels := []*Model{}
+	for i, entry := range sdContainer.SCDContainer.Header.SceneObjects {
+		mdbContainter := sdContainer.SCDContainer.MDBContainers[i]
+
+		tmpModels = append(tmpModels, ModelNew(mdbContainter, entry))
+	}
+
+	cleanUpModels()
+	models = tmpModels
 
 	return nil
 }
@@ -36,6 +50,8 @@ func gui(input string) error {
 
 	rlig.Load()
 	defer rlig.Unload()
+
+	defer cleanUpModels()
 
 	if input != "" {
 		Input = input
@@ -143,31 +159,13 @@ func gui(input string) error {
 
 		rl.DrawGrid(4, 0.5)
 
-		if container != nil {
-			for i, entry := range container.SCDContainer.Header.SceneObjects {
-				rl.PushMatrix()
-				rl.Translatef(entry.Position.X, entry.Position.Y, entry.Position.Z)
+		for _, entry := range models {
+			rl.PushMatrix()
+			rl.Translatef(entry.Position.X, entry.Position.Y, entry.Position.Z)
 
-				rl.DrawCubeV(
-					rl.Vector3Zero(),
-					rl.Vector3One().Scale(20),
-					rl.Yellow,
-				)
+			entry.Draw()
 
-				mdbContainter := container.SCDContainer.MDBContainers[i]
-
-				for _, vb := range mdbContainter.VertexBuffers {
-					for _, pos := range vb.ContainerPositions.Entries {
-						rl.DrawCubeV(
-							rl.NewVector3(pos.X, pos.Y, pos.Z),
-							rl.Vector3One().Scale(5),
-							rl.Purple,
-						)
-					}
-				}
-
-				rl.PopMatrix()
-			}
+			rl.PopMatrix()
 		}
 
 		rl.EndMode3D()

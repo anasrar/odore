@@ -1,7 +1,6 @@
 package main
 
 import (
-	"github.com/anasrar/odore/pkg/sd"
 	rl "github.com/gen2brain/raylib-go/raylib"
 )
 
@@ -29,5 +28,5 @@ var (
 )
 
 var (
-	container *sd.Container = nil
+	models = []*Model{}
 )

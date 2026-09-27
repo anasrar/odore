@@ -12,6 +12,7 @@ import (
 	"github.com/anasrar/odore/pkg/ppk"
 	rlig "github.com/anasrar/odore/pkg/raylib_imgui"
 	"github.com/anasrar/odore/pkg/t32"
+	"github.com/anasrar/odore/pkg/yz2"
 	rl "github.com/gen2brain/raylib-go/raylib"
 )
 
@@ -29,14 +30,20 @@ func cleanUpModels() {
 }
 
 func drop(input string) error {
-	file, err := os.Open(input)
+	data, err := os.ReadFile(input)
 	if err != nil {
 		return err
 	}
-	defer file.Close()
+
+	decompressed, _, err := yz2.Decompress(data)
+	if err != nil {
+		return err
+	}
+
+	stream := bytes.NewReader(decompressed)
 
 	ppkContainer := ppk.New()
-	if err := ppk.FromStream(ppkContainer, file); err != nil {
+	if err := ppk.FromStream(ppkContainer, stream); err != nil {
 		return err
 	}
 
@@ -44,7 +51,7 @@ func drop(input string) error {
 
 	for t32Index, entry := range ppkContainer.T32Container.Entries {
 		t32Container := t32.New()
-		if err := t32.FromStreamWithOffset(t32Container, file, entry.Offset); err != nil {
+		if err := t32.FromStreamWithOffset(t32Container, stream, entry.Offset); err != nil {
 			return err
 		}
 
@@ -78,7 +85,7 @@ func drop(input string) error {
 		hasMDB = true
 
 		mdbContainer := mdb.New()
-		if err := mdb.FromStreamWithOffset(mdbContainer, file, entry.Offset); err != nil {
+		if err := mdb.FromStreamWithOffset(mdbContainer, stream, entry.Offset); err != nil {
 			return err
 		}
 

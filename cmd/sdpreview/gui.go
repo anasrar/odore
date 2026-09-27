@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bytes"
 	"fmt"
 	"log"
 	"os"
@@ -8,6 +9,7 @@ import (
 	"github.com/AllenDang/cimgui-go/imgui"
 	rlig "github.com/anasrar/odore/pkg/raylib_imgui"
 	"github.com/anasrar/odore/pkg/sd"
+	"github.com/anasrar/odore/pkg/yz2"
 	rl "github.com/gen2brain/raylib-go/raylib"
 )
 
@@ -18,14 +20,20 @@ func cleanUpModels() {
 }
 
 func drop(input string) error {
-	file, err := os.Open(input)
+	data, err := os.ReadFile(input)
 	if err != nil {
 		return err
 	}
-	defer file.Close()
+
+	decompressed, _, err := yz2.Decompress(data)
+	if err != nil {
+		return err
+	}
+
+	stream := bytes.NewReader(decompressed)
 
 	sdContainer := sd.New()
-	if err := sd.FromStream(sdContainer, file); err != nil {
+	if err := sd.FromStream(sdContainer, stream); err != nil {
 		return err
 	}
 

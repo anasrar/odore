@@ -1,0 +1,126 @@
+name: Nightly Build
+on:
+  workflow_dispatch:
+
+jobs:
+  build_linux:
+    name: Build Linux & Release
+    permissions:
+      contents: write
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install Deps
+        run: |
+          sudo apt-get install -y gcc-mingw-w64 libgl1-mesa-dev libxi-dev libxcursor-dev libxrandr-dev libxinerama-dev libwayland-dev libxkbcommon-dev
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version: "1.26.5"
+
+      - name: Build
+        run: |
+          mkdir output
+          go build -v -o output/ppkviewer_linux --ldflags="-s -w -X 'main.Version=$(git rev-parse --short=8 HEAD)'" cmd/ppkviewer/*.go
+          echo "Linux: ppkviewer"
+          go build -v -o output/sdviewer_linux --ldflags="-s -w -X 'main.Version=$(git rev-parse --short=8 HEAD)'" cmd/sdviewer/*.go
+          echo "Linux: sdviewer"
+          go build -v -o output/t32unpack_linux --ldflags="-s -w -X 'main.Version=$(git rev-parse --short=8 HEAD)'" cmd/t32unpack/*.go
+          echo "Linux: t32unpack"
+          go build -v -o output/t32pack_linux --ldflags="-s -w -X 'main.Version=$(git rev-parse --short=8 HEAD)'" cmd/t32pack/*.go
+          echo "Linux: t32pack"
+
+      - name: Create Release and Upload Assets
+        uses: ncipollo/release-action@v1.14.0
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          allowUpdates: true
+          tag: nightly
+          prerelease: true
+          name: nightly
+          artifacts: "output/*"
+
+  build_windows:
+    name: Build Windows & Release
+    permissions:
+      contents: write
+    runs-on: windows-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version: "1.26.5"
+
+      - name: Build
+        run: |
+          $VERSION = git rev-parse --short=8 HEAD
+          mkdir output
+          go build -v -o output/ppkviewer_win.exe --ldflags="-extldflags=-static -s -w -X main.Version=$VERSION" ./cmd/ppkviewer
+          echo "Windows: ppkviewer"
+          go build -v -o output/sdviewer_win.exe --ldflags="-extldflags=-static -s -w -X main.Version=$VERSION" ./cmd/sdviewer/
+          echo "Windows: sdviewer"
+          go build -v -o output/t32unpack_win.exe --ldflags="-extldflags=-static -s -w -X main.Version=$VERSION" ./cmd/t32unpack/
+          echo "Windows: t32unpack"
+          go build -v -o output/t32pack_win.exe --ldflags="-extldflags=-static -s -w -X main.Version=$VERSION" ./cmd/t32pack/
+          echo "Windows: t32pack"
+
+      - name: Create Release and Upload Assets
+        uses: ncipollo/release-action@v1.14.0
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          allowUpdates: true
+          tag: nightly
+          prerelease: true
+          name: nightly
+          artifacts: "output/*"
+
+  build_mac:
+    name: Build MacOS M Series & Release
+    permissions:
+      contents: write
+    runs-on: macos-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version: "1.26.5"
+
+      - name: Build
+        run: |
+          mkdir output
+          go build -v -o output/ppkviewer_mac_arm --ldflags="-s -w -X 'main.Version=$(git rev-parse --short=8 HEAD)'" cmd/ppkviewer/*.go
+          echo "MacOS: ppkviewer"
+          go build -v -o output/sdviewer_mac_arm --ldflags="-s -w -X 'main.Version=$(git rev-parse --short=8 HEAD)'" cmd/sdviewer/*.go
+          echo "MacOS: sdviewer"
+          go build -v -o output/t32unpack_mac_arm --ldflags="-s -w -X 'main.Version=$(git rev-parse --short=8 HEAD)'" cmd/t32unpack/*.go
+          echo "MacOS: t32unpack"
+          go build -v -o output/t32pack_mac_arm --ldflags="-s -w -X 'main.Version=$(git rev-parse --short=8 HEAD)'" cmd/t32pack/*.go
+          echo "MacOS: t32pack"
+
+      - name: Create Release and Upload Assets
+        uses: ncipollo/release-action@v1.14.0
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          allowUpdates: true
+          tag: nightly
+          prerelease: true
+          name: nightly
+          artifacts: "output/*"
+
+
+  del_runs:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Delete workflow runs
+        uses: Mattraks/delete-workflow-runs@v2
+        with:
+          token: ${{ github.token }}
+          repository: ${{ github.repository }}
+          retain_days: 30
+          keep_minimum_runs: 3
